@@ -21,7 +21,9 @@ argon2-cffi==23.1.0
 argon2-cffi-bindings==25.1.0
     # via argon2-cffi
 bcrypt==5.0.0
-    # via open-forum (pyproject.toml)
+    # via
+    #   open-forum (pyproject.toml)
+    #   passlib
 certifi==2025.10.5
     # via
     #   open-forum (pyproject.toml)
@@ -53,6 +55,8 @@ email-validator==2.3.0
     # via
     #   open-forum (pyproject.toml)
     #   pydantic
+faker==37.12.0
+    # via open-forum (pyproject.toml)
 fastapi==0.120.0
     # via open-forum (pyproject.toml)
 fastapi-cli==0.0.14
@@ -222,6 +226,8 @@ typing-inspection==0.4.2
     #   open-forum (pyproject.toml)
     #   pydantic
     #   pydantic-settings
+tzdata==2025.2
+    # via faker
 ujson==5.11.0
     # via open-forum (pyproject.toml)
 urllib3==2.5.0

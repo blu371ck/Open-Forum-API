@@ -1,27 +1,15 @@
 import os
 from datetime import datetime, timedelta, timezone
 from typing import Annotated
-
+from sqlalchemy.orm import Session
 import jwt
-from dotenv import load_dotenv
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 from jwt.exceptions import InvalidTokenError
 from pwdlib import PasswordHash
-
-from .schemas import TokenData, User, UserInDB
-
-fake_users_db = {
-    "johndoe": {
-        "username": "johndoe",
-        "full_name": "John Doe",
-        "email": "johndoe@example.com",
-        "hashed_password": "$argon2id$v=19$m=65536,t=3,p=4$wagCPXjifgvUFBzq4hqe3w$CYaIb8sB+wtD+Vu/P4uod1+Qof8h+1g7bbDlBID48Rc",
-        "disabled": False,
-    }
-}
-
-load_dotenv()
+from app.schemas import UserInDB, TokenData
+from app.models import User
+from app.database import get_db
 
 SECRET_KEY = os.environ.get("SECRET_KEY")
 ALGORITHM = os.environ.get("ALGORITHM", "HS256")
@@ -42,15 +30,15 @@ def get_password_hash(password: str) -> str:
     return password_hash.hash(password)
 
 
-def get_user(db, username: str) -> UserInDB | None:
-    if username in db:
-        user_dict = db[username]
-        return UserInDB(**user_dict)
-    return None
+def get_user(db: Session, username: str) -> UserInDB | None:
+    """
+    Fetches a user from the database by their username.
+    """
+    return db.query(User).filter(User.username == username).first()
 
 
-def authenticate_user(fake_db, username: str, password: str) -> UserInDB | None:
-    user = get_user(fake_db, username)
+def authenticate_user(db: Session, username: str, password: str) -> UserInDB | None:
+    user = get_user(db, username)
     if not user:
         return None
     if not verify_password(password, user.hashed_password):
@@ -72,6 +60,7 @@ def create_access_token(data: dict, expires_delta: timedelta | None = None) -> s
 
 async def get_current_user(
     token: Annotated[str, Depends(oauth2_scheme)],
+    db: Session = Depends(get_db)
 ) -> User | HTTPException:
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
@@ -81,17 +70,15 @@ async def get_current_user(
 
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        username: str | None = payload.get("sub")
+        username: str = payload.get("sub")
         if username is None:
             raise credentials_exception
         token_data = TokenData(username=username)
     except InvalidTokenError:
         raise credentials_exception
 
-    if token_data.username is None:
-        raise credentials_exception
 
-    user = get_user(fake_users_db, username=token_data.username)
+    user = get_user(db, username=token_data.username)
     if user is None:
         return credentials_exception
     return user
