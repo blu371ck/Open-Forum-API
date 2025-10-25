@@ -1,11 +1,8 @@
-from datetime import timedelta
-from typing import Annotated
-
-from fastapi import Depends, FastAPI, HTTPException, status
-from fastapi.security import OAuth2PasswordRequestForm
+from fastapi import Depends, FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 
 from . import auth
-from .schemas import Token, User
+from .routers import users
 
 app = FastAPI(
     title="Open Forum",
@@ -13,32 +10,21 @@ app = FastAPI(
     version="0.1.0",
 )
 
+origins = [
+    "http://localhost:3000",  # Potential REACT frontends
+    "http://localhost:5173",  # Potentiel React/Vue/Vite sitautions
+    "http://localhost:8080",  # More specifically for Vue
+    "http://127.0.0.1:3000",
+    "http://127.0.0.1:5173",
+    "http://127.0.0.1:8080",
+]
 
-@app.post("/auth")
-async def login(form_data: Annotated[OAuth2PasswordRequestForm, Depends()]) -> Token:
-    user = auth.authenticate_user(
-        auth.fake_users_db, form_data.username, form_data.password
-    )
-    if user is None:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Incorrect username or password",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
-    access_token_expires = timedelta(minutes=auth.ACCESS_TOKEN_EXPIRE_MINUTES)
-    access_token = auth.create_access_token(
-        data={"sub": user.username}, expires_delta=access_token_expires
-    )
-    return Token(access_token=access_token, token_type="bearer")
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
-
-@app.get("/users/me/", response_model=User)
-async def read_users_me(current_user: Annotated[User, Depends(auth.get_current_user)]):
-    return current_user
-
-
-@app.get("/users/me/items/")
-async def read_own_items(
-    current_user: Annotated[User, Depends(auth.get_current_active_user)],
-):
-    return [{"item_id": "Foo", "owner": current_user.username}]
+app.include_router(users.router, prefix="/api/v1", tags=["users"])
