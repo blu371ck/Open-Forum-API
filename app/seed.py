@@ -1,9 +1,11 @@
 import random
+
 from faker import Faker
 from sqlalchemy.orm import Session
-from app.database import SessionLocal, engine, Base
-from app.models import User
+
 from app.auth import get_password_hash
+from app.database import Base, SessionLocal, engine
+from app.models import User
 
 NUM_USERS = 50
 ROLES = ["Finance", "HR", "IT", "Engineering", "Marketing", "Sales"]
@@ -11,7 +13,8 @@ DEFAULT_PASSWORD = "password123"
 
 fake = Faker()
 
-def seed_database():
+
+def seed_database() -> None:
     Base.metadata.create_all(bind=engine)
 
     db: Session = SessionLocal()
@@ -30,7 +33,7 @@ def seed_database():
                 full_name="Admin User",
                 hashed_password=hashed_password,
                 role="Admin",
-                disabled=False
+                disabled=False,
             )
             db.add(admin_user)
             db.commit()
@@ -43,7 +46,7 @@ def seed_database():
         if user_count > 0:
             print(f"Database already seeded with {user_count} users. Skipping.")
             return
-        
+
         print(f"Seeding database with {NUM_USERS} fake users...")
 
         hashed_password = get_password_hash(DEFAULT_PASSWORD)
@@ -51,7 +54,7 @@ def seed_database():
         for _ in range(NUM_USERS):
             full_name = fake.name()
             email = fake.unique.email()
-            username = email.split('@')[0]
+            username = email.split("@")[0]
             role = random.choice(ROLES)
 
             db_user = User(
@@ -60,11 +63,11 @@ def seed_database():
                 full_name=full_name,
                 hashed_password=hashed_password,
                 role=role,
-                disabled=False
+                disabled=False,
             )
 
             db.add(db_user)
-        
+
         db.commit()
         print(f"Successfully seeded {NUM_USERS} users.")
         print(f"All users have the default password: '{DEFAULT_PASSWORD}'.")
@@ -74,6 +77,7 @@ def seed_database():
         db.rollback()
     finally:
         db.close()
+
 
 if __name__ == "__main__":
     seed_database()

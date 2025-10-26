@@ -1,22 +1,18 @@
 import os
 from datetime import datetime, timedelta, timezone
 from typing import Annotated
-from sqlalchemy.orm import Session
+
 import jwt
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 from jwt.exceptions import InvalidTokenError
 from pwdlib import PasswordHash
-from app.schemas import UserInDB, TokenData
-from app.models import User
+from sqlalchemy.orm import Session
+
+from app.config import Settings, get_settings
 from app.database import get_db
-
-SECRET_KEY = os.environ.get("SECRET_KEY")
-ALGORITHM = os.environ.get("ALGORITHM", "HS256")
-ACCESS_TOKEN_EXPIRE_MINUTES = int(os.environ.get("ACCESS_TOKEN_EXPIRE_MINUTES", "30"))
-
-if SECRET_KEY is None:
-    raise ValueError("Missing SECRET_KEY environment variable.")
+from app.models import User
+from app.schemas import TokenData, UserInDB
 
 password_hash = PasswordHash.recommended()
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/v1/users/auth")
@@ -46,41 +42,55 @@ def authenticate_user(db: Session, username: str, password: str) -> UserInDB | N
     return user
 
 
-def create_access_token(data: dict, expires_delta: timedelta | None = None) -> str:
+def create_access_token(data: dict, settings: Settings = Depends(get_settings)) -> str:
     to_encode = data.copy()
-    if expires_delta:
-        expire = datetime.now(timezone.utc) + expires_delta
+
+    if settings.ACCESS_TOKEN_EXPIRE_MINUTES:
+        expire = datetime.now(timezone.utc) + timedelta(
+            minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES
+        )
     else:
         expire = datetime.now(timezone.utc) + timedelta(minutes=30)
 
     to_encode.update({"exp": expire})
-    encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
+    encoded_jwt = jwt.encode(
+        to_encode, settings.SECRET_KEY, algorithm=settings.ALGORITHM
+    )
     return encoded_jwt
 
 
 async def get_current_user(
     token: Annotated[str, Depends(oauth2_scheme)],
-    db: Session = Depends(get_db)
-) -> User | HTTPException:
+    db: Session = Depends(get_db),
+    settings: Settings = Depends(get_settings),
+) -> UserInDB | HTTPException:
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Could not validate credentials",
         headers={"WWW-Authentication": "Bearer"},
     )
 
+    token_data: TokenData | None = None
+
     try:
-        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        username: str = payload.get("sub")
+        payload = jwt.decode(
+            token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM]
+        )
+        username: str | None = payload.get("sub")
         if username is None:
             raise credentials_exception
+
         token_data = TokenData(username=username)
+
     except InvalidTokenError:
         raise credentials_exception
 
+    if token_data is None:
+        raise credentials_exception
 
     user = get_user(db, username=token_data.username)
     if user is None:
-        return credentials_exception
+        raise credentials_exception
     return user
 
 

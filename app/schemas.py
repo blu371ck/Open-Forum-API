@@ -15,7 +15,7 @@ class TokenData(BaseModel):
     Model representation of the tokens content.
     """
 
-    username: str | None = None
+    username: str
 
 
 class User(BaseModel):
