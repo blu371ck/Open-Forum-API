@@ -24,34 +24,9 @@ ROLES = list(UserRole)
 fake = Faker()
 
 
-def load_profile_pictures(pic_dir):
-    """Loads image data from files."""
-    picture_data = []
-    if not os.path.isdir(pic_dir):
-        print(f"Warning: Profile picture directory not found: {pic_dir}")
-        return []
-    try:
-        for filename in os.listdir(pic_dir):
-            if filename.lower().endswith((".png", ".jpg", ".jpeg", ".gif")):
-                filepath = os.path.join(pic_dir, filename)
-                try:
-                    with open(filepath, "rb") as f:
-                        picture_data.append(f.read())
-                except Exception as e:
-                    print(f"Warning: Could not read image file {filepath}: {e}")
-        if not picture_data:
-            print(f"Warning: No valid image files found in {pic_dir}")
-        return picture_data
-    except Exception as e:
-        print(f"Error accessing picture directory {pic_dir}: {e}")
-        return []
-
-
 def seed_database() -> None:
     print("Seeding database...")
     db: Session = SessionLocal()
-
-    profile_pics = load_profile_pictures(PROFILE_PIC_DIR)
 
     hashed_password = get_password_hash(DEFAULT_PASSWORD)
 
@@ -75,8 +50,6 @@ def seed_database() -> None:
         else:
             role = random.choice(ROLES)
 
-        profile_picture_data = random.choice(profile_pics) if profile_pics else None
-
         existing_user = (
             db.query(User)
             .filter((User.email == email) | (User.username == username))
@@ -96,7 +69,6 @@ def seed_database() -> None:
             role=role,
             region=region,
             site=site,
-            profile_picture=profile_picture_data,
         )
         users_to_add.append(new_user)
 

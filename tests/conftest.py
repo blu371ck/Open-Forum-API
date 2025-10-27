@@ -1,11 +1,13 @@
 import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.orm import Session, sessionmaker
 from sqlalchemy.pool import StaticPool
 
+from app.auth import get_password_hash
 from app.database import Base, get_db
 from app.main import app
+from app.models import Region, Site, User, UserRole
 
 SQLALCHEMY_DATABASE_URL = "sqlite:///:memory:"
 
@@ -43,3 +45,23 @@ def client(db_session):
     yield TestClient(app)
 
     app.dependency_overrides.clear()
+
+
+def create_test_user(
+    db: Session, username: str, password: str, disabled: bool = False
+) -> User:
+    hashed_password = get_password_hash(password)
+    user = User(
+        username=username,
+        email=username,
+        hashed_password=hashed_password,
+        disabled=disabled,
+        role=UserRole.USER,
+        region=Region.EAST,
+        site=Site.NEW_YORK,
+    )
+
+    db.add(user)
+    db.commit()
+    db.refresh(user)
+    return user

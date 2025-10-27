@@ -3,12 +3,11 @@ import os
 from sqlalchemy import create_engine
 from sqlalchemy.orm import declarative_base, sessionmaker
 
-DATABASE_URL = os.getenv("DATABASE_URL")
+from app.config import settings
 
-if DATABASE_URL and DATABASE_URL.startswith("postgres"):
-    engine = create_engine(DATABASE_URL)
-else:
-    engine = create_engine("sqlite:///:memory:")
+DATABASE_URL_TO_USE = settings.DATABASE_URL
+
+engine = create_engine(DATABASE_URL_TO_USE)
 
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 

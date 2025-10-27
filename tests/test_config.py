@@ -4,25 +4,60 @@ from pydantic import ValidationError
 from app.config import Settings, SettingsConfigDict
 
 
-def test_settings_load_from_env(monkeypatch):
+def test_settings_load_database_url_from_env(monkeypatch):
     """
-    Tests that settings correctly load required variables from the .env file.
+    Tests settings loads DATABASE_URL from the environment variable.
     """
-    monkeypatch.setenv("SECRET_KEY", "test-secret-from-env")
-    monkeypatch.setenv("ACCESS_TOKEN_EXPIRE_MINUTES", "45")
+    postgresl_url = "postgresql://env_user:env_pass@env_host/env_db"
+    monkeypatch.setenv("DATABASE_URL", postgresl_url)
+
+    monkeypatch.setenv("SECRET_KEY", "dummy-secret-for-this-test")
+    monkeypatch.setenv("ACCESS_TOKEN_EXPIRE_MINUTES", "15")
+    monkeypatch.setenv("ALGORITHM", "test-algo")
 
     settings = Settings()
-    assert settings.SECRET_KEY == "test-secret-from-env"
-    assert settings.ACCESS_TOKEN_EXPIRE_MINUTES == 45
-    assert settings.ALGORITHM == "HS256"
+
+    assert settings.DATABASE_URL == postgresl_url
+    assert settings.SECRET_KEY == "dummy-secret-for-this-test"
+    assert settings.ACCESS_TOKEN_EXPIRE_MINUTES == 15
+    assert settings.ALGORITHM == "test-algo"
 
 
-def test_settings_Missing_required_variable(monkeypatch):
+def test_settings_use_default_database_url(monkeypatch):
     """
-    Tests that settings raises a ValidationError if a required env variable is missing.
+    Test settigns uses the default DATABASE_URL when non is provided.
     """
-    monkeypatch.delenv("SECRET_KEY", raising=False)
-    monkeypatch.setenv("ACCESS_TOKEN_EXPIRE_MINUTES", "30")
+    monkeypatch.delenv("DATABASE_URL", raising=False)
+    monkeypatch.setenv("SECRET_KEY", "dummy-secret-for-this-test-default")
+    monkeypatch.setenv("ACCESS_TOKEN_EXPIRE_MINUTES", "20")
+    monkeypatch.setenv("ALGORITHM", "test-algo")
+
+    original_config = Settings.model_config
+    monkeypatch.setattr(
+        Settings, "model_config", SettingsConfigDict(env_file=None, extra="ignore")
+    )
+
+    try:
+        settings = Settings()
+        assert settings.DATABASE_URL == "sqlite:///:memory:"
+        assert settings.SECRET_KEY == "dummy-secret-for-this-test-default"
+        assert settings.ACCESS_TOKEN_EXPIRE_MINUTES == 20
+        assert settings.ALGORITHM == "test-algo"
+        assert isinstance(settings.ACCESS_TOKEN_EXPIRE_MINUTES, int)
+    finally:
+        monkeypatch.setattr(Settings, "model_config", original_config)
+
+
+def test_validation_thrown_when_missing_config(monkeypatch):
+    """
+    Tests that Pydantic throws a ValidationError when there is amissing
+    environment variable.
+    """
+
+    monkeypatch.delenv("ALGORITHM", raising=False)
+    monkeypatch.setenv("SECRET_KEY", "one-more-time")
+    monkeypatch.setenv("ACCESS_TOKEN_EXPIRE_MINUTES", "20")
+    monkeypatch.setenv("DATABASE_URL", "postgresql://user:pass@host/db")
 
     original_config = Settings.model_config
     monkeypatch.setattr(
@@ -32,21 +67,7 @@ def test_settings_Missing_required_variable(monkeypatch):
     try:
         with pytest.raises(ValidationError) as excinfo:
             Settings()
-
-        assert "SECRET_KEY" in str(excinfo.value)
+        assert "ALGORITHM" in str(excinfo.value)
         assert "Field required" in str(excinfo.value)
     finally:
         monkeypatch.setattr(Settings, "model_config", original_config)
-
-
-def test_settings_type_coercion(monkeypatch):
-    """
-    Tests that Pydantic correctly converts env var strings to declared types (e.g., int)
-    """
-    monkeypatch.setenv("SECRET_KEY", "another-secret")
-    monkeypatch.setenv("ACCESS_TOKEN_EXPIRE_MINUTES", "60")
-
-    settings = Settings()
-
-    assert settings.ACCESS_TOKEN_EXPIRE_MINUTES == 60
-    assert isinstance(settings.ACCESS_TOKEN_EXPIRE_MINUTES, int)

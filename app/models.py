@@ -43,4 +43,3 @@ class User(Base):
     )
     region: Mapped[Region] = mapped_column(SQLEnum(Region), index=True, nullable=False)
     site: Mapped[Site] = mapped_column(SQLEnum(Site), index=True, nullable=False)
-    profile_picture: Mapped[bytes | None] = mapped_column(LargeBinary, nullable=True)

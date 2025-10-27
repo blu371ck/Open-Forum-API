@@ -46,4 +46,3 @@ def test_user_model_defaults():
 
     assert user.disabled is None
     assert user.full_name is None
-    assert user.profile_picture is None
