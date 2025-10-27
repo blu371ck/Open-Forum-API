@@ -1,7 +1,7 @@
 import pytest
 from pydantic import ValidationError
 
-from app.models import Region, Site, UserRole
+from app.enums import Region, Site, UserRole
 from app.schemas import User, UserBase, UserCreate
 
 

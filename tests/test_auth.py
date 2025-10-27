@@ -14,8 +14,8 @@ from app.auth import (
     verify_password,
 )
 from app.config import Settings
-from app.models import Region, Site, User, UserRole
-from app.schemas import User as UserSchema
+from app.models import User
+from app.enums import Region, Site, UserRole
 
 TEST_SECRET_KEY = "a_random_string_for_testing_purposes_only_123!"
 TEST_ALGORITHM = "HS256"

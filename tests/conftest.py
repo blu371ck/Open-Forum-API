@@ -7,7 +7,8 @@ from sqlalchemy.pool import StaticPool
 from app.auth import get_password_hash
 from app.database import Base, get_db
 from app.main import app
-from app.models import Region, Site, User, UserRole
+from app.models import  User
+from app.enums import Region, Site, UserRole
 
 SQLALCHEMY_DATABASE_URL = "sqlite:///:memory:"
 
