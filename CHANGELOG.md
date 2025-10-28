@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
+## [0.0.6]
+
+### Added
+- Added new routes for walks:
+    - "/api/v1/walks/" - root create new walk
+    - "/api/v1/walks/{walk_id} - getter for specific walk
+    - "/api/v1/walks/{walk_id} - putter for updating specific walk
+    - "/api/v1/walks/{walk.id} - delete for specific walks.
+- Updated unit testing for these new paths.
+
 ## [0.0.5]
 
 ### Added
