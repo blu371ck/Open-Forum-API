@@ -1,7 +1,9 @@
-from pydantic import BaseModel, ConfigDict
-from typing import Optional, List
 from datetime import datetime
-from app.models import Region, Site, UserRole, WalkStatus, FeedbackStatus, TagType
+from typing import List, Optional
+
+from pydantic import BaseModel, ConfigDict
+
+from app.models import FeedbackStatus, Region, Site, TagType, UserRole, WalkStatus
 
 
 class Token(BaseModel):
@@ -61,36 +63,46 @@ class UserInDB(User):
 
     hashed_password: str
 
+
 class TagBase(BaseModel):
     """
     Models tags assigned to feedback items.
     """
+
     name: str
     type: TagType | None = None
 
+
 class TagCreate(TagBase):
     pass
+
 
 class Tag(TagBase):
     """
     Models the tag in the database.
     """
+
     id: int
     model_config = ConfigDict(from_attributes=True)
+
 
 class CommentBase(BaseModel):
     """
     Models comments assigned to feedback items.
     """
+
     text: str
+
 
 class CommentCreate(CommentBase):
     pass
+
 
 class Comment(CommentBase):
     """
     Models comments from the database.
     """
+
     id: int
     creation_date: datetime
     author_id: int
@@ -98,10 +110,12 @@ class Comment(CommentBase):
     author: Optional[User] = None
     model_config = ConfigDict(from_attributes=True)
 
+
 class FeedbackBase(BaseModel):
     """
     Models the feedback items.
     """
+
     title: str
     description: str
     status: FeedbackStatus = FeedbackStatus.CREATED
@@ -109,10 +123,12 @@ class FeedbackBase(BaseModel):
     follow_up_note: str | None = None
     resolution_note: str | None = None
 
+
 class FeedbackCreate(FeedbackBase):
     walk_id: int
     owner_id: int | None = None
     tags_id: List[int] = []
+
 
 class FeedbackUpdate(BaseModel):
     title: Optional[str] = None
@@ -122,6 +138,7 @@ class FeedbackUpdate(BaseModel):
     follow_up_note: Optional[str] = None
     resolution_note: Optional[str] = None
     tag_ids: Optional[List[int]] = None
+
 
 class Feedback(FeedbackBase):
     id: int
@@ -135,24 +152,29 @@ class Feedback(FeedbackBase):
     comments: List[Comment] = []
     model_config = ConfigDict(from_attributes=True)
 
+
 class WalkBase(BaseModel):
     """
     Model representing the walks object.
     """
+
     region: Region
     site: Site
     walk_date: datetime
     whiteboard: str | None = None
     status: WalkStatus = WalkStatus.CREATED
 
+
 class WalkCreate(WalkBase):
     pass
+
 
 class WalkUpdate(BaseModel):
     walk_date: Optional[datetime] = None
     whiteboard: Optional[str] = None
     status: Optional[WalkStatus] = None
     owner_id: Optional[int] = None
+
 
 class Walk(WalkBase):
     id: int
@@ -164,3 +186,9 @@ class Walk(WalkBase):
     owner: Optional[User] = None
     feedback: List[Feedback] = []
     model_config = ConfigDict(from_attributes=True)
+
+
+Walk.model_rebuild()
+Feedback.model_rebuild()
+User.model_rebuild()
+Comment.model_rebuild()

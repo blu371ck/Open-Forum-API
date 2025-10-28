@@ -1,20 +1,14 @@
-from sqlalchemy import (
-    Boolean,
-    Table,
-    Enum as SQLEnum,
-    Integer,
-    String,
-    Column,
-    DateTime,
-    Text, 
-    ForeignKey
-)
 from datetime import datetime
 from typing import List
+
+from sqlalchemy import Boolean, Column, DateTime
+from sqlalchemy import Enum as SQLEnum
+from sqlalchemy import ForeignKey, Integer, String, Table, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.sql import func
-from app.enums import UserRole, Region, Site, WalkStatus, FeedbackStatus, TagType
+
 from app.database import Base
+from app.enums import FeedbackStatus, Region, Site, TagType, UserRole, WalkStatus
 
 feedback_tags_association = Table(
     "feedback_tags",
@@ -22,6 +16,7 @@ feedback_tags_association = Table(
     Column("feedback_id", Integer, ForeignKey("feedback.id"), primary_key=True),
     Column("tag_id", Integer, ForeignKey("tags.id"), primary_key=True),
 )
+
 
 class User(Base):
     __tablename__ = "users"
@@ -37,11 +32,20 @@ class User(Base):
     )
     region: Mapped[Region] = mapped_column(SQLEnum(Region), index=True, nullable=False)
     site: Mapped[Site] = mapped_column(SQLEnum(Site), index=True, nullable=False)
-    walks_created: Mapped[List["Walk"]] = relationship("Walk", back_populates="creator", foreign_keys="Walk.creator_id")
-    walks_owned: Mapped[List["Walk"]] = relationship("Walk", back_populates="owner", foreign_keys="Walk.owner_id")
-    feedback_created: Mapped[List["Feedback"]] = relationship("Feedback", back_populates="creator", foreign_keys="Feedback.creator_id")
-    feedback_owned: Mapped[List["Feedback"]] = relationship("Feedback", back_populates="owner", foreign_keys="Feedback.owner_id")
+    walks_created: Mapped[List["Walk"]] = relationship(
+        "Walk", back_populates="creator", foreign_keys="Walk.creator_id"
+    )
+    walks_owned: Mapped[List["Walk"]] = relationship(
+        "Walk", back_populates="owner", foreign_keys="Walk.owner_id"
+    )
+    feedback_created: Mapped[List["Feedback"]] = relationship(
+        "Feedback", back_populates="creator", foreign_keys="Feedback.creator_id"
+    )
+    feedback_owned: Mapped[List["Feedback"]] = relationship(
+        "Feedback", back_populates="owner", foreign_keys="Feedback.owner_id"
+    )
     comments: Mapped[List["Comment"]] = relationship("Comment", back_populates="author")
+
 
 class Walk(Base):
     __tablename__ = "walks"
@@ -49,56 +53,95 @@ class Walk(Base):
     id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
     region: Mapped[Region] = mapped_column(SQLEnum(Region), index=True, nullable=False)
     site: Mapped[Site] = mapped_column(SQLEnum(Site), index=True, nullable=False)
-    creation_date: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    creation_date: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now()
+    )
     walk_date: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
     whiteboard: Mapped[str | None] = mapped_column(Text, nullable=True)
-    status: Mapped[WalkStatus] = mapped_column(SQLEnum(WalkStatus), default=WalkStatus.CREATED, nullable=False)
-    creator_id: Mapped[int] = mapped_column(Integer, ForeignKey("users.id"), nullable=False)
-    owner_id: Mapped[int] = mapped_column(Integer, ForeignKey("users.id"), nullable=False)
-    creator: Mapped["User"] = relationship("User", back_populates="walks_created", foreign_keys=[creator_id])
-    owner: Mapped["User"] = relationship("User", back_populates="walks_owned", foreign_keys=[owner_id])
+    status: Mapped[WalkStatus] = mapped_column(
+        SQLEnum(WalkStatus), default=WalkStatus.CREATED, nullable=False
+    )
+    creator_id: Mapped[int] = mapped_column(
+        Integer, ForeignKey("users.id"), nullable=False
+    )
+    owner_id: Mapped[int] = mapped_column(
+        Integer, ForeignKey("users.id"), nullable=False
+    )
+    creator: Mapped["User"] = relationship(
+        "User", back_populates="walks_created", foreign_keys=[creator_id]
+    )
+    owner: Mapped["User"] = relationship(
+        "User", back_populates="walks_owned", foreign_keys=[owner_id]
+    )
     feedback: Mapped[List["Feedback"]] = relationship("Feedback", back_populates="walk")
+
 
 class Tag(Base):
     __tablename__ = "tags"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
     name: Mapped[str] = mapped_column(String, unique=True, index=True, nullable=False)
-    type: Mapped[TagType | None] = mapped_column(SQLEnum(TagType), index=True, nullable=True)
+    type: Mapped[TagType | None] = mapped_column(
+        SQLEnum(TagType), index=True, nullable=True
+    )
 
     feedbacks: Mapped[List["Feedback"]] = relationship(
         "Feedback", secondary=feedback_tags_association, back_populates="tags"
     )
 
+
 class Feedback(Base):
     __tablename__ = "feedback"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
-    creation_date: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    creation_date: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now()
+    )
     title: Mapped[str] = mapped_column(String, nullable=False)
     description: Mapped[str] = mapped_column(Text, nullable=True)
-    status: Mapped[FeedbackStatus] = mapped_column(SQLEnum(FeedbackStatus), default=FeedbackStatus.CREATED, nullable=False)
+    status: Mapped[FeedbackStatus] = mapped_column(
+        SQLEnum(FeedbackStatus), default=FeedbackStatus.CREATED, nullable=False
+    )
     votes: Mapped[int] = mapped_column(Integer, default=0)
     follow_up_note: Mapped[str | None] = mapped_column(Text, nullable=True)
     resolution_note: Mapped[str | None] = mapped_column(Text, nullable=True)
-    walk_id: Mapped[int] = mapped_column(Integer, ForeignKey("walks.id"), nullable=False)
-    creator_id: Mapped[int] = mapped_column(Integer, ForeignKey("users.id"), nullable=False)
-    owner_id: Mapped[int | None] = mapped_column(Integer, ForeignKey("users.id"), nullable=True)
+    walk_id: Mapped[int] = mapped_column(
+        Integer, ForeignKey("walks.id"), nullable=False
+    )
+    creator_id: Mapped[int] = mapped_column(
+        Integer, ForeignKey("users.id"), nullable=False
+    )
+    owner_id: Mapped[int | None] = mapped_column(
+        Integer, ForeignKey("users.id"), nullable=True
+    )
     walk: Mapped["Walk"] = relationship("Walk", back_populates="feedback")
-    creator: Mapped["User"] = relationship("User", back_populates="feedback_created", foreign_keys=[creator_id])
-    owner: Mapped[User | None] = relationship("User", back_populates="feedback_owned", foreign_keys=[owner_id])
-    comments: Mapped[List["Comment"]] = relationship("Comment", back_populates="feedback")
+    creator: Mapped["User"] = relationship(
+        "User", back_populates="feedback_created", foreign_keys=[creator_id]
+    )
+    owner: Mapped[User | None] = relationship(
+        "User", back_populates="feedback_owned", foreign_keys=[owner_id]
+    )
+    comments: Mapped[List["Comment"]] = relationship(
+        "Comment", back_populates="feedback"
+    )
     tags: Mapped[List["Tag"]] = relationship(
         "Tag", secondary=feedback_tags_association, back_populates="feedbacks"
     )
+
 
 class Comment(Base):
     __tablename__ = "comments"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
-    creation_date: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    creation_date: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now()
+    )
     text: Mapped[str] = mapped_column(Text, nullable=False)
-    feedback_id: Mapped[int] = mapped_column(Integer, ForeignKey("feedback.id"), nullable=False)
-    author_id: Mapped[int] = mapped_column(Integer, ForeignKey("users.id"), nullable=False)
+    feedback_id: Mapped[int] = mapped_column(
+        Integer, ForeignKey("feedback.id"), nullable=False
+    )
+    author_id: Mapped[int] = mapped_column(
+        Integer, ForeignKey("users.id"), nullable=False
+    )
     feedback: Mapped["Feedback"] = relationship("Feedback", back_populates="comments")
     author: Mapped["User"] = relationship("User", back_populates="comments")

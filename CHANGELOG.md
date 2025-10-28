@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
+## [0.0.5]
+
+### Added
+- Added new routes "/users/me/feedback" and "/users/me/walks" which returns walk or feedback data that is owned or created by the currently logged in user. This will be utilized later, when we create the graphical front-end.
+- Added unit tests for these new routes.
+
 ## [0.0.4]
 
 ### Added

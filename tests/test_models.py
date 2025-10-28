@@ -1,7 +1,7 @@
 import pytest
 
-from app.models import User
 from app.enums import Region, Site, UserRole
+from app.models import User
 
 
 def test_user_model_creation():

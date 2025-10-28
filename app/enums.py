@@ -1,5 +1,6 @@
 import enum
 
+
 class UserRole(enum.Enum):
     USER = "User"
     MANAGER = "Manager"
@@ -20,10 +21,12 @@ class Site(enum.Enum):
     DALLAS = "Dallas, TX"
     SEATTLE = "Seattle, WA"
 
+
 class WalkStatus(enum.Enum):
     CREATED = "Created"
     IN_PROGRESS = "In-Progress"
     COMPLETED = "Completed"
+
 
 class FeedbackStatus(enum.Enum):
     CREATED = "create"
@@ -31,6 +34,7 @@ class FeedbackStatus(enum.Enum):
     IN_PROGRESS = "In-Progress"
     SUCCESSFUL = "Successful"
     UNSUCCESSFUL = "Unsuccessful"
+
 
 class TagType(enum.Enum):
     GLOBAL = "Global"
