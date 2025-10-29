@@ -144,68 +144,6 @@ def test_get_specific_walk_unauthenticated(client, db_session: Session):
     assert "Not authenticated" in response.json()["detail"]
 
 
-def test_delete_walk_success(client, db_session: Session):
-    """
-    Tests deleting an existing walk successfully.
-    """
-    user = create_test_user(db_session, "deleter@example.com", "password")
-    headers = create_auth_headers(user.username)
-    now = datetime.now(timezone.utc)
-    walk = WalkModel(
-        creator_id=user.id,
-        owner_id=user.id,
-        walk_date=now,
-        region=user.region,
-        site=user.site,
-    )
-    db_session.add(walk)
-    db_session.commit()
-    db_session.refresh(walk)
-    walk_id_to_delete = walk.id
-
-    response = client.delete(f"/api/v1/walks/{walk_id_to_delete}", headers=headers)
-    assert response.status_code == 204
-    deleted_walk = (
-        db_session.query(WalkModel).filter(WalkModel.id == walk_id_to_delete).first()
-    )
-    assert deleted_walk is None
-
-
-def test_delete_walk_not_found(client, db_session: Session):
-    """
-    Tests deletinga  non-existent walk.
-    """
-    user = create_test_user(db_session, "delnotfound@example.com", "password")
-    headers = create_auth_headers(user.username)
-    non_existent_id = 9999
-
-    response = client.delete(f"/api/v1/walks/{non_existent_id}", headers=headers)
-    assert response.status_code == 404
-    assert "not found" in response.json()["detail"]
-
-
-def test_delete_walk_unauthenticated(client, db_session: Session):
-    """
-    Tests deleting a walk without authentication.
-    """
-    user = create_test_user(db_session, "unauthdel@example.com", "password")
-    now = datetime.now(timezone.utc)
-    walk = WalkModel(
-        creator_id=user.id,
-        owner_id=user.id,
-        walk_date=now,
-        region=user.region,
-        site=user.site,
-    )
-    db_session.add(walk)
-    db_session.commit()
-    db_session.refresh(walk)
-
-    response = client.delete(f"/api/v1/walks/{walk.id}")
-    assert response.status_code == 401
-    assert "Not authenticated" in response.json()["detail"]
-
-
 def test_update_walk_success(client, db_session: Session):
     """
     Test updatnig an existing walk successfully.

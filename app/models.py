@@ -74,6 +74,9 @@ class Walk(Base):
         "User", back_populates="walks_owned", foreign_keys=[owner_id]
     )
     feedback: Mapped[List["Feedback"]] = relationship("Feedback", back_populates="walk")
+    is_archived: Mapped[bool] = mapped_column(
+        Boolean, default=False, index=True, nullable=False
+    )
 
 
 class Tag(Base):
@@ -126,6 +129,9 @@ class Feedback(Base):
     )
     tags: Mapped[List["Tag"]] = relationship(
         "Tag", secondary=feedback_tags_association, back_populates="feedbacks"
+    )
+    is_archived: Mapped[bool] = mapped_column(
+        Boolean, default=False, index=True, nullable=False
     )
 
 

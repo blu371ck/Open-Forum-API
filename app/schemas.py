@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import List, Optional
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
 
 from app.models import FeedbackStatus, Region, Site, TagType, UserRole, WalkStatus
 
@@ -141,7 +141,7 @@ class FeedbackUpdate(BaseModel):
 
 
 class Feedback(FeedbackBase):
-    id: int
+    id: int = Field(gt=0)
     creation_date: datetime
     walk_id: int
     creator_id: int
@@ -173,11 +173,11 @@ class WalkUpdate(BaseModel):
     walk_date: Optional[datetime] = None
     whiteboard: Optional[str] = None
     status: Optional[WalkStatus] = None
-    owner_id: Optional[int] = None
+    owner_id: Optional[int] = Field(default=None, gt=0)
 
 
 class Walk(WalkBase):
-    id: int
+    id: int = Field(gt=0)
     creation_date: datetime
     creator_id: int
     owner_id: int
@@ -188,7 +188,6 @@ class Walk(WalkBase):
     model_config = ConfigDict(from_attributes=True)
 
 
-Walk.model_rebuild()
-Feedback.model_rebuild()
-User.model_rebuild()
-Comment.model_rebuild()
+class StatusResponse(BaseModel):
+    status: str
+    message: str | None = None
