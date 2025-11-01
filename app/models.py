@@ -133,6 +133,7 @@ class Feedback(Base):
     is_archived: Mapped[bool] = mapped_column(
         Boolean, default=False, index=True, nullable=False
     )
+    is_anonymous: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
 
 
 class Comment(Base):

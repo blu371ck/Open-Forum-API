@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import List, Optional
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, computed_field, model_validator
 
 from app.models import FeedbackStatus, Region, Site, TagType, UserRole, WalkStatus
 
@@ -122,19 +122,21 @@ class FeedbackBase(BaseModel):
     votes: int = 0
     follow_up_note: str | None = None
     resolution_note: str | None = None
+    is_anonymous: bool = False
 
 
 class FeedbackCreate(FeedbackBase):
     walk_id: int
     owner_id: int | None = None
     tags_id: List[int] = []
+    is_anonymous: bool = False
 
 
 class FeedbackUpdate(BaseModel):
     title: Optional[str] = None
     description: Optional[str] = None
     status: Optional[FeedbackStatus] = None
-    owner_id: Optional[int] = None
+    owner_id: Optional[int] = Field(default=None, gt=0)
     follow_up_note: Optional[str] = None
     resolution_note: Optional[str] = None
     tag_ids: Optional[List[int]] = None
@@ -146,11 +148,46 @@ class Feedback(FeedbackBase):
     walk_id: int
     creator_id: int
     owner_id: int | None = None
-    creator: Optional[User] = None
-    owner: Optional[User] = None
+    creator: Optional[User] = Field(None, exclude=True)
+    owner: Optional[User] = Field(None, exclude=True)
     tags: List[Tag] = []
     comments: List[Comment] = []
     model_config = ConfigDict(from_attributes=True)
+
+    @model_validator(mode="after")
+    def mask_anonymous_creator(self) -> "Feedback":
+        """
+        If is_anonymous is True, set the 'creator' field to None so
+        it is not included in teh API response.
+        """
+        if self.is_anonymous:
+            self.creator = None
+        return self
+
+    @computed_field
+    def creator_name(self) -> str:
+        """
+        Returns the creator's full name or 'Anonymous'.
+        """
+
+        if self.is_anonymous:
+            return "Anonymous"
+        if self.creator and self.creator.full_name:
+            return self.creator.full_name
+        if self.creator and self.creator.username:
+            return self.creator.username
+        return "Unknown"
+
+    @computed_field
+    def owner_name(self) -> str | None:
+        """
+        Returns the owner's full name, userna,e or None.
+        """
+        if self.owner and self.owner.full_name:
+            return self.owner.full_name
+        if self.owner and self.owner.username:
+            return self.owner.username
+        return None
 
 
 class WalkBase(BaseModel):
@@ -182,10 +219,32 @@ class Walk(WalkBase):
     creator_id: int
     owner_id: int
 
-    creator: Optional[User] = None
-    owner: Optional[User] = None
+    creator: Optional[User] = Field(None, exclude=True)
+    owner: Optional[User] = Field(None, exclude=True)
     feedback: List[Feedback] = []
     model_config = ConfigDict(from_attributes=True)
+
+    @computed_field
+    def creator_name(self) -> str:
+        """
+        Returns the creator's full n ame or username.
+        """
+        if self.creator and self.creator.full_name:
+            return self.creator.full_name
+        if self.creator and self.creator.username:
+            return self.creator.username
+        return "Unknown"
+
+    @computed_field
+    def owner_name(self) -> str:
+        """
+        Returns the owner's full name or username.
+        """
+        if self.owner and self.owner.full_name:
+            return self.owner.full_name
+        if self.owner and self.owner.username:
+            return self.owner.username
+        return "Unknown"
 
 
 class StatusResponse(BaseModel):

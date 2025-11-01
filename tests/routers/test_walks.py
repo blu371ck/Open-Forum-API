@@ -1,28 +1,13 @@
 from datetime import datetime, timedelta, timezone
-from typing import Any, Dict
 
 import pytest
 from sqlalchemy.orm import Session
 
-from app.auth import create_access_token
-from app.config import settings
 from app.enums import Region, Site, WalkStatus
 from app.main import app
-from app.models import User as UserModel
 from app.models import Walk as WalkModel
-from app.schemas import Walk as WalkSchema
-from app.schemas import WalkCreate, WalkUpdate
 
-from ..conftest import create_test_user
-
-
-def create_auth_headers(username: str) -> Dict[str, str]:
-    """
-    Generates authorization headers for a given username.
-    """
-    token_data = {"sub": username}
-    access_token = create_access_token(data=token_data, settings=settings)
-    return {"Authorization": f"Bearer {access_token}"}
+from ..conftest import create_auth_headers, create_test_user
 
 
 def test_create_walk_success(client, db_session: Session):

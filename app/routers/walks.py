@@ -77,7 +77,11 @@ async def archive_walk(
             status_code=status.HTTP_404_NOT_FOUND, detail="Walk not found"
         )
 
-    is_admin = current_user.role == UserRole.DEVELOPER
+    is_admin = current_user.role in (
+        UserRole.MANAGER,
+        UserRole.EXECUTIVE,
+        UserRole.DEVELOPER,
+    )
     is_creator_or_owner = (
         walk.creator_id == current_user.id or walk.owner_id == current_user.id
     )

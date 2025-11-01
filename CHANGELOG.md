@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
+## [0.0.7]
+
+### Added
+- Added new routes for feedback, similar to walks.
+- Created unit tests for these new routes
+- Added anonymous input for feedbacks, to ensure they remain anonymous.
+    - Updated models to return None when feedback is created by anonymous user.
+- Added logic to convert creator/owner IDs to full names for more human friendliness
+
 ## [0.0.6]
 
 ### Added
