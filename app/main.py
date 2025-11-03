@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.routers import feedback, users, walks
+from app.routers import comments, feedback, users, walks
 
 app = FastAPI(
     title="Open Forum",
@@ -29,3 +29,4 @@ app.add_middleware(
 app.include_router(users.router, prefix="/api/v1", tags=["users"])
 app.include_router(walks.router, prefix="/api/v1", tags=["walks"])
 app.include_router(feedback.router, prefix="/api/v1", tags=["feedback"])
+app.include_router(comments.router, prefix="/api/v1", tags=["comments"])

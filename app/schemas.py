@@ -94,8 +94,12 @@ class CommentBase(BaseModel):
     text: str
 
 
-class CommentCreate(CommentBase):
-    pass
+class CommentCreate(BaseModel):
+    text: str
+
+
+class CommentUpdate(BaseModel):
+    text: str
 
 
 class Comment(CommentBase):
@@ -105,10 +109,23 @@ class Comment(CommentBase):
 
     id: int
     creation_date: datetime
+    updated_at: datetime | None = None
     author_id: int
     feedback_id: int
-    author: Optional[User] = None
+    author: Optional[User] = Field(None, exclude=True)
     model_config = ConfigDict(from_attributes=True)
+
+    @computed_field
+    def author_name(self) -> str:
+        """
+        Returns the author's full name or username.
+        """
+
+        if self.author and self.author.full_name:
+            return self.author.full_name
+        if self.author and self.author.username:
+            return self.author.username
+        return "Unknown"
 
 
 class FeedbackBase(BaseModel):

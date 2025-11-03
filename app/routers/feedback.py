@@ -1,10 +1,11 @@
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, Path, status
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, selectinload
 
 from app.auth import get_current_active_user
 from app.database import get_db
+from app.models import Comment
 from app.models import Feedback as FeedbackModel
 from app.models import Tag as TagModel
 from app.models import User as UserModel
@@ -75,10 +76,12 @@ async def get_specific_feedback(
 ) -> FeedbackModel:
     """
     Retrieves a specific feedback by ID. Requires authentication.
+    Comments will be nested and sorted by creation date.
     """
     feedback = (
         db.query(FeedbackModel)
         .filter(FeedbackModel.id == feedback_id, FeedbackModel.is_archived == False)
+        .options(selectinload(FeedbackModel.comments).selectinload(Comment.author))
         .first()
     )
 

@@ -125,7 +125,10 @@ class Feedback(Base):
         "User", back_populates="feedback_owned", foreign_keys=[owner_id]
     )
     comments: Mapped[List["Comment"]] = relationship(
-        "Comment", back_populates="feedback"
+        "Comment",
+        back_populates="feedback",
+        order_by="Comment.creation_date.asc()",
+        cascade="all, delete-orphan",
     )
     tags: Mapped[List["Tag"]] = relationship(
         "Tag", secondary=feedback_tags_association, back_populates="feedbacks"
@@ -152,3 +155,6 @@ class Comment(Base):
     )
     feedback: Mapped["Feedback"] = relationship("Feedback", back_populates="comments")
     author: Mapped["User"] = relationship("User", back_populates="comments")
+    updated_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), onupdate=func.now(), nullable=True
+    )

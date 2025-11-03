@@ -62,11 +62,13 @@ def create_test_user(
     role: UserRole = UserRole.USER,
 ) -> UserModel:
     hashed_password = get_password_hash(password)
+    user_full_name = username.split("@")[0].replace("_", " ").title()
     user = UserModel(
         username=username,
         email=username,
         hashed_password=hashed_password,
         disabled=disabled,
+        full_name=user_full_name,
         role=role,
         region=Region.EAST,
         site=Site.NEW_YORK,
